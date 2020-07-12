@@ -44,6 +44,7 @@ jobs:
       - fmt-check
       - isort-check
       - lint
+      - cc-before-build
       - all-tests
       - run:
           when: on_success
