@@ -1,6 +1,14 @@
 version: 2.1
 
 commands:
+  cc-before-build:
+    description: "Code Climate before-build"
+    steps:
+      - run:
+          command: |
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+            chmod +x ./cc-test-reporter
+            ./cc-test-reporter before-build
   fmt-check:
     description: "Confirma que a formatação do código"
     steps:
@@ -17,23 +25,6 @@ commands:
     description: "Roda todos os testes do projeto (unitários e integração)"
     steps:
       - run: "pipenv run test"
-
-  typehint-coverage:
-    description: "Upload de coverage de typehint"
-    steps:
-      - run:
-          name: "Typehint coverage report"
-          command: |
-            mkdir -p .mypy/xml/cov
-            pipenv run lint --cobertura-xml-report .mypy/xml/cov
-            pipenv run codecov --flags typehint --file .mypy/xml/cov/cobertura.xml
-            rm -rf .mypy/
-
-
-  test-coverage:
-    description: "Upload unittest coverage data"
-    steps:
-      - run: "pipenv run codecov --flags unittest"
 
 jobs:
   test:
@@ -53,9 +44,11 @@ jobs:
       - fmt-check
       - isort-check
       - lint
-      - typehint-coverage
+      - cc-before-build
       - all-tests
-      - test-coverage
+      - run:
+          when: on_success
+          command: "./cc-test-reporter after-build --coverage-input-type coverage.py"
 workflows:
   version: 2
   test:
